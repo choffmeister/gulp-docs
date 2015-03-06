@@ -4,12 +4,15 @@ layout: blank
 <div class="row">
   <div class="col-sm-3 hidden-xs">
     <ul id="sitemap">
-    {% for section in site.sitemaps.group1 %}
-      <li class="sitemap-headline">{{ section.title }}</li>
-      {% for entry in section.entries %}
-        <li class="sitemap-entry">
-          <a href="{{ link }}">{{ entry.title }}</a>
-        </li>
+    {% for name, sitemap in site.sitemaps %}
+      <li class="sitemap-group">{{ sitemap.title }}</li>
+      {% for section in sitemap.sections %}
+        <li class="sitemap-section">{{ section.title }}</li>
+        {% for entry in section.entries %}
+          <li class="sitemap-entry">
+            <a href="{{ entry.link }}">{{ entry.title }}</a>
+          </li>
+        {% endfor %}
       {% endfor %}
     {% endfor %}
     </ul>

@@ -1,5 +1,10 @@
-- key: section1
-  title: Section 1
-  entries:
-    - title: Overview
-      link: page:group1-start
+key: group1
+title: Group 1
+sections:
+  - key: section1
+    title: Section 1
+    entries:
+      - title: Start
+        link: page:group1-start
+      - title: End
+        link: page:group1-end
