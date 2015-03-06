@@ -1,0 +1,5 @@
+- key: section2
+  title: Section 2
+  entries:
+    - title: Overview
+      link: page:group2-start

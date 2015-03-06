@@ -1,0 +1,6 @@
+# Build target
+target/
+target2/
+
+# Node modules
+node_modules/
