@@ -87,13 +87,13 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
   var md = gulp.src(['./src/pages/**/*.md'])
     .pipe(plumber(onerror))
     .pipe(frontmatter())
-    .pipe(markdown.render())
-    .pipe(rename({ extname: '.html' }));
+    .pipe(markdown.render());
 
   return merge(html, md)
     .pipe(layout.apply(site))
     .pipe(page.render(site))
     .pipe(page.resolveLinks(site))
+    .pipe(rename({ extname: '.html' }))
     .pipe(gif(config.dist, minifyhtml()))
     .pipe(gulp.dest('./target'))
     .pipe(connect.reload());
