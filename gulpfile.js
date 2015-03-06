@@ -2,6 +2,7 @@ var argv = require('yargs').argv,
     browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     connect = require('gulp-connect'),
+    error = require('./lib/error'),
     frontmatter = require('gulp-front-matter'),
     gif = require('gulp-if'),
     gulp = require('gulp'),
@@ -13,7 +14,6 @@ var argv = require('yargs').argv,
     minifyhtml = require('gulp-minify-html'),
     page = require('./lib/page'),
     path = require('path'),
-    plumber = require('gulp-plumber'),
     reactify = require('reactify'),
     rename = require('gulp-rename'),
     sitemap = require('./lib/sitemap'),
@@ -42,50 +42,33 @@ var site = {
   pages: [],
 };
 
-var onerror = function (err) {
-  if (config.debug) {
-    gutil.beep();
-    if (err.plugin) {
-      gutil.log(
-        'Error in plugin \'' + gutil.colors.cyan(err.plugin) + '\'',
-        "\n\n" + gutil.colors.red(err.message) + "\n");
-    } else {
-      gutil.log(
-        'Error',
-        "\n\n" + gutil.colors.red(err.message) + "\n");
-    }
-  } else {
-    throw err;
-  }
-};
-
 gulp.task('site-sitemaps', function () {
   return gulp.src(['./src/sitemaps/*.yml'])
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(sitemap.load(site));
 });
 
 gulp.task('site-layouts', function () {
   return gulp.src(['./src/layouts/*.html'])
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(frontmatter())
     .pipe(layout.list(site));
 });
 
 gulp.task('site-pages', function () {
   return gulp.src(['./src/pages/**/*.{html,md}'])
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(frontmatter())
     .pipe(page.list(site));
 });
 
 gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () {
   var html = gulp.src(['./src/pages/**/*.html'])
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(frontmatter());
 
   var md = gulp.src(['./src/pages/**/*.md'])
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(frontmatter())
     .pipe(markdown.render());
 
@@ -101,7 +84,7 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
 
 gulp.task('assets-styles', function () {
   return gulp.src('./src/assets/styles/main.less')
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(less({ compress: config.dist }))
     .pipe(size({ showFiles: true, gzip: config.dist }))
     .pipe(gulp.dest('./target/assets/styles'))
@@ -115,7 +98,10 @@ gulp.task('assets-scripts', function () {
 
   function bundle() {
     return bundler.bundle()
-      .pipe(plumber(onerror))
+      .on('error', function (err) {
+        error.logerror(err);
+        this.emit('end');
+      })
       .pipe(source('main.js'))
       .pipe(buffer())
       .pipe(gif(config.dist, uglify({ preserveComments: 'some' })))
@@ -127,14 +113,14 @@ gulp.task('assets-scripts', function () {
 
 gulp.task('assets-images', function () {
   return gulp.src('./src/assets/images/**/*.{png,jpg,gif}')
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/images'))
     .pipe(connect.reload());
 });
 
 gulp.task('assets-fonts', function () {
   return gulp.src('./src/assets/fonts/**/*')
-    .pipe(plumber(onerror))
+    .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/fonts'))
     .pipe(connect.reload());
 });
