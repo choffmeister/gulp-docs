@@ -19,7 +19,8 @@ var argv = require('yargs').argv,
     sitemap = require('./lib/sitemap'),
     size = require('gulp-size'),
     source = require('vinyl-source-stream'),
-    uglify = require('gulp-uglify');
+    uglify = require('gulp-uglify'),
+    utils = require('./lib/utils');
 
 var config = {
   debug: !argv.dist,
@@ -79,7 +80,7 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
     .pipe(rename({ extname: '.html' }))
     .pipe(gif(config.dist, minifyhtml()))
     .pipe(gulp.dest('./target'))
-    .pipe(connect.reload());
+    .pipe(utils.reload(connect));
 });
 
 gulp.task('assets-styles', function () {
@@ -88,7 +89,7 @@ gulp.task('assets-styles', function () {
     .pipe(less({ compress: config.dist }))
     .pipe(size({ showFiles: true, gzip: config.dist }))
     .pipe(gulp.dest('./target/assets/styles'))
-    .pipe(connect.reload());
+    .pipe(utils.reload(connect));
 });
 
 gulp.task('assets-scripts', function () {
@@ -107,7 +108,7 @@ gulp.task('assets-scripts', function () {
       .pipe(gif(config.dist, uglify({ preserveComments: 'some' })))
       .pipe(size({ showFiles: true, gzip: config.dist }))
       .pipe(gulp.dest('./target/assets/scripts'))
-      .pipe(connect.reload());
+      .pipe(utils.reload(connect));
   };
 });
 
@@ -115,14 +116,14 @@ gulp.task('assets-images', function () {
   return gulp.src('./src/assets/images/**/*.{png,jpg,gif}')
     .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/images'))
-    .pipe(connect.reload());
+    .pipe(utils.reload(connect));
 });
 
 gulp.task('assets-fonts', function () {
   return gulp.src('./src/assets/fonts/**/*')
     .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/fonts'))
-    .pipe(connect.reload());
+    .pipe(utils.reload(connect));
 });
 
 gulp.task('connect', ['build'], function () {
