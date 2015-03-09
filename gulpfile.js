@@ -87,6 +87,10 @@ gulp.task('assets-styles', function () {
   return gulp.src('./src/assets/styles/main.less')
     .pipe(error.handle(config.debug))
     .pipe(less({ compress: config.dist }))
+    .on('error', function (err) {
+      // without this rebuilding hangs
+      this.emit('end');
+    })
     .pipe(size({ showFiles: true, gzip: config.dist }))
     .pipe(gulp.dest('./target/assets/styles'))
     .pipe(utils.reload(connect));
