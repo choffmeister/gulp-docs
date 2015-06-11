@@ -1,7 +1,7 @@
 var argv = require('yargs').argv,
     browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
-    connect = require('gulp-connect'),
+    connect = require('connect'),
     error = require('./lib/error'),
     frontmatter = require('gulp-front-matter'),
     gif = require('gulp-if'),
@@ -9,6 +9,7 @@ var argv = require('yargs').argv,
     gutil = require('gulp-util'),
     layout = require('./lib/layout'),
     less = require('gulp-less'),
+    livereload = require('gulp-livereload'),
     markdown = require('./lib/markdown'),
     merge = require('merge-stream'),
     minifyhtml = require('gulp-minify-html'),
@@ -29,7 +30,7 @@ var config = {
 };
 
 var data = {
-  github_url: 'https://github.com/ePages-de/epages-docs'
+  github_url: 'https://github.com/choffmeister/gulp-docs'
 };
 
 var site = {
@@ -41,6 +42,16 @@ var site = {
   sitemaps: {},
   layouts: {},
   pages: [],
+};
+
+var onerror = function (err) {
+  if (config.debug) {
+    gutil.beep();
+    gutil.log(err.message);
+    this.emit('end');
+  } else {
+    throw err;
+  }
 };
 
 gulp.task('site-sitemaps', function () {
@@ -80,20 +91,17 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
     .pipe(rename({ extname: '.html' }))
     .pipe(gif(config.dist, minifyhtml()))
     .pipe(gulp.dest('./target'))
-    .pipe(utils.reload(connect));
+    .pipe(utils.reload());
 });
 
 gulp.task('assets-styles', function () {
   return gulp.src('./src/assets/styles/main.less')
     .pipe(error.handle(config.debug))
     .pipe(less({ compress: config.dist }))
-    .on('error', function (err) {
-      // without this rebuilding hangs
-      this.emit('end');
-    })
+    .on('error', onerror)
     .pipe(size({ showFiles: true, gzip: config.dist }))
     .pipe(gulp.dest('./target/assets/styles'))
-    .pipe(utils.reload(connect));
+    .pipe(utils.reload());
 });
 
 gulp.task('assets-scripts', function () {
@@ -103,16 +111,13 @@ gulp.task('assets-scripts', function () {
 
   function bundle() {
     return bundler.bundle()
-      .on('error', function (err) {
-        error.logerror(err);
-        this.emit('end');
-      })
+      .on('error', onerror)
       .pipe(source('main.js'))
       .pipe(buffer())
       .pipe(gif(config.dist, uglify({ preserveComments: 'some' })))
       .pipe(size({ showFiles: true, gzip: config.dist }))
       .pipe(gulp.dest('./target/assets/scripts'))
-      .pipe(utils.reload(connect));
+      .pipe(utils.reload());
   };
 });
 
@@ -120,25 +125,28 @@ gulp.task('assets-images', function () {
   return gulp.src('./src/assets/images/**/*.{png,jpg,gif}')
     .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/images'))
-    .pipe(utils.reload(connect));
+    .pipe(utils.reload());
 });
 
 gulp.task('assets-fonts', function () {
   return gulp.src('./src/assets/fonts/**/*')
     .pipe(error.handle(config.debug))
     .pipe(gulp.dest('./target/assets/fonts'))
-    .pipe(utils.reload(connect));
+    .pipe(utils.reload());
 });
 
-gulp.task('connect', ['build'], function () {
-  connect.server({
-    port: config.port,
-    root: './target/',
-    livereload: true
-  });
+gulp.task('connect', ['build'], function (next) {
+  var serveStatic = require('serve-static');
+  connect()
+    .use(serveStatic('./target'))
+    .listen(config.port, function () {
+      gutil.log('Listening on http://localhost:' + config.port + '/');
+      //next();
+    });
 });
 
 gulp.task('watch', ['build'], function () {
+  livereload.listen({ auto: true });
   gulp.watch('./src/**/*.{html,md,yml}', ['pages']);
   gulp.watch('./src/assets/styles/**/*.{css,less}', ['assets-styles']);
   gulp.watch('./src/assets/scripts/**/*.{js,jsx}', ['assets-scripts']);
