@@ -15,6 +15,7 @@ var argv = require('yargs').argv,
     minifyhtml = require('gulp-minify-html'),
     page = require('./lib/page'),
     path = require('path'),
+    plumber = require('gulp-plumber'),
     reactify = require('reactify'),
     rename = require('gulp-rename'),
     sitemap = require('./lib/sitemap'),
@@ -40,47 +41,51 @@ var site = {
   pages: []
 };
 
-var onerror = function (err) {
-  if (config.debug) {
-    gutil.beep();
-    gutil.log(err.message);
-    this.emit('end');
-  } else {
-    throw err;
-  }
+var errorHandler = function () {
+  return plumber({
+    errorHandler: config.dist ? false : function (err) {
+      if (err.plugin) {
+        gutil.log('Error in plugin \'' + gutil.colors.cyan(err.plugin) + '\'', gutil.colors.red(err.message));
+      } else {
+        gutil.log('Error', gutil.colors.red(err.message));
+      }
+      gutil.beep();
+    }
+  });
 };
 
 gulp.task('site-sitemaps', function () {
   return gulp.src(['./src/sitemaps/*.yml'])
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(sitemap.load(site));
 });
 
 gulp.task('site-layouts', function () {
   return gulp.src(['./src/layouts/*.html'])
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(frontmatter())
     .pipe(layout.list(site));
 });
 
 gulp.task('site-pages', function () {
   return gulp.src(['./src/pages/**/*.{html,md}'])
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(frontmatter())
     .pipe(page.list(site));
 });
 
 gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () {
   var html = gulp.src(['./src/pages/**/*.html'])
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(frontmatter());
 
   var md = gulp.src(['./src/pages/**/*.md'])
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(frontmatter())
     .pipe(markdown.render());
 
   return merge(html, md)
+    .pipe(errorHandler())
     .pipe(layout.apply(site))
     .pipe(page.render(site))
     .pipe(page.resolveLinks(site))
@@ -92,9 +97,8 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
 
 gulp.task('assets-styles', function () {
   return gulp.src('./src/assets/styles/main.less')
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(less({ compress: config.dist }))
-    .on('error', onerror)
     .pipe(size({ showFiles: true, gzip: config.dist }))
     .pipe(gulp.dest('./target/assets/styles'))
     .pipe(utils.reload());
@@ -106,7 +110,7 @@ gulp.task('assets-scripts', function () {
 
   var bundle = function () {
     return bundler.bundle()
-      .on('error', onerror)
+      .pipe(errorHandler())
       .pipe(source('main.js'))
       .pipe(buffer())
       .pipe(gif(config.dist, uglify({ preserveComments: 'some' })))
@@ -120,14 +124,14 @@ gulp.task('assets-scripts', function () {
 
 gulp.task('assets-images', function () {
   return gulp.src('./src/assets/images/**/*.{png,jpg,gif}')
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(gulp.dest('./target/assets/images'))
     .pipe(utils.reload());
 });
 
 gulp.task('assets-fonts', function () {
   return gulp.src('./src/assets/fonts/**/*')
-    .on('error', onerror)
+    .pipe(errorHandler())
     .pipe(gulp.dest('./target/assets/fonts'))
     .pipe(utils.reload());
 });
