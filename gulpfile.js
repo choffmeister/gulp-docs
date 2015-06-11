@@ -1,8 +1,8 @@
+/*eslint-env node*/
 var argv = require('yargs').argv,
     browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     connect = require('connect'),
-    error = require('./lib/error'),
     frontmatter = require('gulp-front-matter'),
     gif = require('gulp-if'),
     gulp = require('gulp'),
@@ -29,19 +29,15 @@ var config = {
   port: argv.port || 9000
 };
 
-var data = {
-  github_url: 'https://github.com/choffmeister/gulp-docs'
-};
-
 var site = {
   encoding: 'utf8',
   debug: config.debug,
   dist: config.dist,
   target: path.resolve(__dirname, 'target'),
-  data: data,
+  data: require('./data'),
   sitemaps: {},
   layouts: {},
-  pages: [],
+  pages: []
 };
 
 var onerror = function (err) {
@@ -56,31 +52,31 @@ var onerror = function (err) {
 
 gulp.task('site-sitemaps', function () {
   return gulp.src(['./src/sitemaps/*.yml'])
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(sitemap.load(site));
 });
 
 gulp.task('site-layouts', function () {
   return gulp.src(['./src/layouts/*.html'])
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(frontmatter())
     .pipe(layout.list(site));
 });
 
 gulp.task('site-pages', function () {
   return gulp.src(['./src/pages/**/*.{html,md}'])
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(frontmatter())
     .pipe(page.list(site));
 });
 
 gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () {
   var html = gulp.src(['./src/pages/**/*.html'])
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(frontmatter());
 
   var md = gulp.src(['./src/pages/**/*.md'])
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(frontmatter())
     .pipe(markdown.render());
 
@@ -96,7 +92,7 @@ gulp.task('pages', ['site-sitemaps', 'site-layouts', 'site-pages'], function () 
 
 gulp.task('assets-styles', function () {
   return gulp.src('./src/assets/styles/main.less')
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(less({ compress: config.dist }))
     .on('error', onerror)
     .pipe(size({ showFiles: true, gzip: config.dist }))
@@ -107,9 +103,8 @@ gulp.task('assets-styles', function () {
 gulp.task('assets-scripts', function () {
   var bundler = browserify('./src/assets/scripts/main.js')
     .transform(reactify);
-  return bundle();
 
-  function bundle() {
+  var bundle = function () {
     return bundler.bundle()
       .on('error', onerror)
       .pipe(source('main.js'))
@@ -119,23 +114,25 @@ gulp.task('assets-scripts', function () {
       .pipe(gulp.dest('./target/assets/scripts'))
       .pipe(utils.reload());
   };
+
+  return bundle();
 });
 
 gulp.task('assets-images', function () {
   return gulp.src('./src/assets/images/**/*.{png,jpg,gif}')
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(gulp.dest('./target/assets/images'))
     .pipe(utils.reload());
 });
 
 gulp.task('assets-fonts', function () {
   return gulp.src('./src/assets/fonts/**/*')
-    .pipe(error.handle(config.debug))
+    .on('error', onerror)
     .pipe(gulp.dest('./target/assets/fonts'))
     .pipe(utils.reload());
 });
 
-gulp.task('connect', ['build'], function (next) {
+gulp.task('connect', ['build'], function (/*next*/) {
   var serveStatic = require('serve-static');
   connect()
     .use(serveStatic('./target'))

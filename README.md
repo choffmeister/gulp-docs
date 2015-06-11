@@ -1,12 +1,12 @@
 # gulp-docs
 
 ~~~ bash
-# initialize
+# install dependencies
 $ npm install
 
-# run in development mode (with optional watching for changes)
-$ gulp server --watch
+# run server in development mode (with livereload)
+$ npm start
 
-# build distributable package (with optional minification)
-$ gulp build --dist
+# build distributable package (with minification)
+$ npm run build
 ~~~
