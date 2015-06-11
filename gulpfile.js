@@ -3,6 +3,7 @@ var argv = require('yargs').argv,
     browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     connect = require('connect'),
+    eslint = require('gulp-eslint'),
     frontmatter = require('gulp-front-matter'),
     gif = require('gulp-if'),
     gulp = require('gulp'),
@@ -27,7 +28,7 @@ var argv = require('yargs').argv,
 var config = {
   dev: argv.dev,
   dist: !argv.dev,
-  port: argv.port || process.env.PORT || 9000
+  port: process.env.PORT || 9000
 };
 
 var site = {
@@ -136,6 +137,13 @@ gulp.task('assets-fonts', function () {
     .pipe(utils.reload());
 });
 
+gulp.task('eslint', function () {
+  return gulp.src(['./gulpfile.js', './data.js', './{lib,src}/**/*.js'])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(gif(config.dist, eslint.failOnError()));
+});
+
 gulp.task('connect', ['build'], function (/*next*/) {
   var serveStatic = require('serve-static');
   connect()
@@ -157,7 +165,8 @@ gulp.task('watch', ['build'], function () {
 gulp.task('site', ['site-sitemaps', 'site-pages', 'site-layouts']);
 gulp.task('assets', ['assets-styles', 'assets-scripts', 'assets-images', 'assets-fonts']);
 
-gulp.task('test', ['build']);
+gulp.task('lint', ['eslint']);
+gulp.task('test', ['lint', 'build']);
 gulp.task('build', ['site', 'pages', 'assets']);
 
 gulp.task('server', ['connect', 'watch']);
