@@ -2,8 +2,9 @@
   "name": "gulp-docs",
   "private": true,
   "scripts": {
-    "start": "node node_modules/.bin/gulp",
-    "build": "node node_modules/.bin/gulp build --dist"
+    "start": "node node_modules/.bin/gulp --dev",
+    "test": "node node_modules/.bin/gulp test",
+    "build": "node node_modules/.bin/gulp build"
   },
   "devDependencies": {
     "browserify": "10.2.4",

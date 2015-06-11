@@ -25,14 +25,14 @@ var argv = require('yargs').argv,
     utils = require('./lib/utils');
 
 var config = {
-  debug: !argv.dist,
-  dist: argv.dist,
-  port: argv.port || 9000
+  dev: argv.dev,
+  dist: !argv.dev,
+  port: argv.port || process.env.PORT || 9000
 };
 
 var site = {
   encoding: 'utf8',
-  debug: config.debug,
+  dev: config.dev,
   dist: config.dist,
   target: path.resolve(__dirname, 'target'),
   data: require('./data'),
@@ -43,7 +43,7 @@ var site = {
 
 var errorHandler = function () {
   return plumber({
-    errorHandler: config.dist ? false : function (err) {
+    errorHandler: !config.dev ? false : function (err) {
       if (err.plugin) {
         gutil.log('Error in plugin \'' + gutil.colors.cyan(err.plugin) + '\'', gutil.colors.red(err.message));
       } else {
@@ -157,6 +157,8 @@ gulp.task('watch', ['build'], function () {
 gulp.task('site', ['site-sitemaps', 'site-pages', 'site-layouts']);
 gulp.task('assets', ['assets-styles', 'assets-scripts', 'assets-images', 'assets-fonts']);
 
+gulp.task('test', ['build']);
 gulp.task('build', ['site', 'pages', 'assets']);
+
 gulp.task('server', ['connect', 'watch']);
 gulp.task('default', ['server']);
