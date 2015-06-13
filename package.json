@@ -7,10 +7,13 @@
     "build": "node node_modules/.bin/gulp build"
   },
   "devDependencies": {
+    "babelify": "^6.1.2",
     "browserify": "10.2.4",
+    "browserify-shim": "3.8.8",
     "connect": "3.3.5",
     "del": "1.2.0",
     "gulp": "3.9.0",
+    "gulp-concat": "2.5.2",
     "gulp-eslint": "0.13.2",
     "gulp-front-matter": "1.2.3",
     "gulp-if": "1.2.5",
@@ -26,7 +29,6 @@
     "js-yaml": "3.3.1",
     "marked": "0.3.3",
     "merge-stream": "0.1.7",
-    "reactify": "1.1.1",
     "sanitize-html": "1.7.0",
     "serve-static": "1.9.3",
     "swig": "1.4.2",
@@ -41,14 +43,15 @@
     "jquery": "2.1.4",
     "react": "0.13.3"
   },
-  "browserify": {
-    "transform": [
-      [
-        "reactify",
-        {
-          "es6": true
-        }
-      ]
-    ]
+  "browserify-shim": {
+    "jquery": {
+      "exports": "global:jQuery"
+    },
+    "bootstrap": {
+      "depends": ["jquery:jQuery"]
+    },
+    "react": {
+      "exports": "global:React"
+    }
   }
 }

@@ -1,5 +1,15 @@
 /*eslint-env node*/
 /*eslint-env browser*/
-window.jQuery = require('jquery');
-window.Bootstrap = require('bootstrap');
-window.React = require('react');
+var jQuery = require('jquery'),
+    React = require('react');
+
+class Foo extends React.Component {
+  constructor() {
+    super()
+    console.log('foo');
+  }
+
+  render() {
+    return (<div>Hi</div>);
+  }
+}
